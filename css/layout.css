@@ -1,0 +1,61 @@
+ /* some basic styles. nothing to do with flexbox */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    width: 100%;
+    background-color: red;
+}
+
+.wrapper section {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+
+    width: 100%;
+    background-color: green;
+}
+
+.wrapper header {
+    background-color: gray;
+}
+
+.wrapper section nav.aside-1 {
+    min-width: 200px;
+    max-width: 200px;
+    background-color: lightgrey;
+}
+
+
+.wrapper section aside.aside-2 {
+    min-width: 200px;
+    max-width: 200px;
+    background-color: lightgrey;
+}
+
+.wrapper section article {
+    position: relative;
+    min-width: 100px;
+    flex: 1 1 auto;
+    background-color: rgb(100,100,100);
+    overflow: hidden;
+}
+
+.wrapper footer {
+    background-color: gray;
+}

@@ -1,0 +1,194 @@
+
+body {
+  font-family: Sans-Serif;
+}
+
+div.drawing {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+div.drawing > div.frame {
+    outline: 2px dashed lightgrey;
+    background-color: white;
+    position: absolute;
+    left: 100px;
+    top: 50px;
+    width: 200px;
+    height: 300px;
+    cursor: url("../images/cursor.gif") 10 10,auto;
+}
+
+canvas.layer {
+    position: absolute;
+    /* background-color: rgba(255,255,255,0.5); */
+    pointer-events: none;
+}
+
+/* canvas.temporary { */
+/*     position: absolute; */
+/*     background-color: red; */
+/*     pointer-events: none; */
+/* } */
+
+
+.layers td {
+    vertical-align: top;
+}
+
+.layers .placeholder {
+    width: 100%;
+    height: 10px;
+    background: rgb(150,150,150);
+}
+
+.droppable * {
+    pointer-events: none;    
+}
+
+div.title {
+    background-color: rgb(170,170,170);
+    width: 100%;
+    font-weight: bold;
+    text-align: center;
+}
+
+div.container {
+    padding: 3px;
+    max-height: 100%;
+    overflow-y: auto;
+    border-bottom: 1px solid grey;
+}
+
+.layer-preview {
+    padding: 3px;
+    position: relative;
+}
+
+.layer-preview canvas {
+    display: block;
+    width: 100%;
+    /* height: 100px; */
+    /* outline: 1px solid grey; */
+    background-color: white;
+}
+
+.layer-preview.selected canvas {
+    outline: 2px solid black;
+}
+
+.layer-preview  input {
+
+}
+
+div.brush-container {
+    padding: 2px;
+    /* border: 1px solid black; */
+}
+
+canvas.brush-preview {
+    padding: 3px;
+    margin: 0 3px;
+    background-color: white;
+}
+
+img.tool {
+    display: inline;
+    margin: 1px;
+    padding: 3px;
+}
+
+.invisible {
+    display: none;
+}
+
+.selected {
+    background-color: white;
+}
+
+table.palette {
+    width: 100%;
+    border-spacing: 0;
+}
+
+.palette td.swatch {
+    padding: 0;
+}
+
+.palette .swatch > div {
+    width: 100%;
+    height: 20px;
+}
+
+.palette .swatch.selected {
+    outline: 2px solid black;
+}
+
+.palette .swatch.selected > div {
+    outline: 1px solid white;
+}
+
+.palette input.color {
+    margin: 0;
+    padding: 0;
+    width: 95%;
+}
+
+.palette input.color.red {
+    color: red;
+}
+
+div.message {
+    float: left;
+}
+
+div.coordinates {
+    float: right;
+}
+
+.actions table {
+    width: 100%;
+    border-spacing: 0;
+}    
+
+.action .desc {
+    width: 100%;
+}
+
+.action .icon {
+    display: block;
+    padding: 0 2px;
+
+}
+
+.action .brush {
+    text-align: center;
+    min-width: 16px;
+
+}
+
+.action.redo {
+    opacity: 0.5;
+}
+
+.action td.swatch {
+    min-width: 16px;
+}
+
+
+tr.action:hover {
+    background-color: white;
+}
+
+
+.region {
+    position: absolute;
+    outline: 2px solid lightgrey;
+}
+
+.region .inner {
+    width: 100%;
+    height: 100%;
+    outline: 2px dashed grey;
+}
