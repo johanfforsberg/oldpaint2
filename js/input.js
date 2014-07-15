@@ -12,8 +12,9 @@ OldPaint.setupInput = function (element, view, drawStroke, drawEphemeral) {
         // mouse coordinates in element space
         mouse_move = Bacon.fromEventTarget(document, "mousemove", function (evt) {
             evt.preventDefault();
-            return {x: evt.pageX - element.offsetLeft,
-                    y: evt.pageY - element.offsetTop};}).toProperty(),
+            var bb = element.parentNode.getBoundingClientRect();  // not very neat
+            return {x: evt.pageX - bb.left,
+                    y: evt.pageY - bb.top};}).toProperty(),
         // mouse coords in image space
         mouse_image = mouse_move
             .map(view.to_image_coords)

@@ -5,29 +5,43 @@ OldPaint.Brush = (function () {
 
     var key = 0;
 
+    var toString = Object.prototype.toString;
+
+    function isString (obj) {
+        return toString.call(obj) == '[object String]';
+    }
+
     var Brush = function (size, shape) {
 	this.size = size;
         this.shape = shape;
         this.color = null;
 
-        this.key = key;
-        key += 1;
+        this.key = key++;
 
-        var spec = {indexed: false, size: size};
-        // shown by the UI preview
-	this.preview = new OldPaint.Image(spec);
-        // used for drawing
-	this.draw = new OldPaint.Image(spec);
-        // used for erasing
-	this.erase = new OldPaint.Image(spec);
+        if (isString(shape)) {
 
-        // a temporary palette to draw the preview
-        var palette = new OldPaint.Palette([[0, 0, 0, 255]]);
+            // shape is e.g. "ellipse"
 
-	this[shape](this.preview, 0, palette);
+            var spec = {indexed: false, size: size};
+            // shown by the UI preview
+	    this.preview = new OldPaint.Image(spec);
+            // used for drawing
+	    this.draw = new OldPaint.Image(spec);
+            // used for erasing
+	    this.erase = new OldPaint.Image(spec);
 
-        // TODO: erase-brush should be drawn on the fly
-	this[shape](this.erase, 0, palette);
+            // a temporary palette to draw the preview
+            var palette = new OldPaint.Palette([[0, 0, 0, 255]]);
+
+	    this[shape](this.preview, 0, palette);
+
+            // TODO: erase-brush should be drawn on the fly
+	    this[shape](this.erase, 0, palette);
+        } else {
+            // presumably, shape is an image
+            this.size = shape.image.get_size();
+            this.preview = this.draw = shape;
+        }
 
         this.previewURL = this.preview.image.get_repr().toDataURL();
     };

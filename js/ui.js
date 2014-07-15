@@ -6,7 +6,9 @@ var _ = mori;
 OldPaint.UI = (function () {
 
     var MAX_UNDOS = 10;
+    var actionNumber = 0;
 
+    // default palette
     var colors = [[170,170,170,0],[0,0,0,255],[101,101,101,255],[223,223,223,255],[207,48,69,255],[223,138,69,255],[207,223,69,255],[138,138,48,255],[48,138,69,255],[69,223,69,255],[69,223,207,255],[48,138,207,255],[138,138,223,255],[69,48,207,255],[207,48,207,255],[223,138,207,255],[227,227,227,255],[223,223,223,255],[223,223,223,255],[195,195,195,255],[178,178,178,255],[170,170,170,255],[146,146,146,255],[130,130,130,255],[113,113,113,255],[113,113,113,255],[101,101,101,255],[81,81,81,255],[65,65,65,255],[48,48,48,255],[32,32,32,255],[32,32,32,255],[243,0,0,255]];
 
     function truncate(vec, maxlen) {
@@ -14,8 +16,6 @@ OldPaint.UI = (function () {
         return _.vector.apply(null, _.into_array(
             _.subvec(vec, Math.max(0, len - maxlen), len)));
     }
-
-    var actionNumber = 0;
 
     var Drawing = React.createClass({
 
@@ -27,8 +27,8 @@ OldPaint.UI = (function () {
                 size: {width: 320, height: 256},
                 layers: _.vector(),
                 palette: new OldPaint.Palette(colors),
-                brushes: [new OldPaint.Brush({width: 1, height: 1}, "rectangle", 1),
-                          new OldPaint.Brush({width: 7, height: 5}, "ellipse", 1)],
+                brushes: _.vector(new OldPaint.Brush({width: 1, height: 1}, "rectangle", 1),
+                                  new OldPaint.Brush({width: 7, height: 5}, "ellipse", 1)),
                 undos: _.vector(), redos: _.list(),
                 statusMessages: ["Hello! Welcome to OldPaint2!"]
             };
@@ -47,18 +47,15 @@ OldPaint.UI = (function () {
                         <section>
                             {/* various widgets on the left side */}
                             <nav className="aside-1">
-                                
+
                                 <ToolsList ref="tools"
-                                           tools={this.state.tools}
-                                           select={this.selectTool}/>
+                                           tools={this.state.tools}/>
 
                                 <BrushesList ref="brushes"
-                                             brushes={this.state.brushes}
-                                             select={this.selectBrush}/>
+                                             brushes={this.state.brushes}/>
 
                                 <PaletteView ref="palette"
                                              palette={this.state.palette}
-                                             select={this.selectColor}
                                              setColor={this.setColor}/>
 
                                 <ActionList undos={this.state.undos}
@@ -66,7 +63,6 @@ OldPaint.UI = (function () {
                                             setRegion={this.setRegion}
                                             undo={this.undo}
                                             redo={this.redo}/>
-
                             </nav>
                             <article>
                                 {/* the actual drawing area */}
@@ -75,10 +71,11 @@ OldPaint.UI = (function () {
                                              layers={this.state.layers}
                                              palette={this.state.palette}
                                              region={this.state.currentRegion}
-                                             stroke={this.drawStroke}
+                                             draw={this.drawStroke}
                                              drawEphemeral={this.drawEphemeral}
                                              undo={this.undo}
-                                             redo={this.redo}/>
+                                             redo={this.redo}
+                                             makeBrush={this.makeBrush}/>
 
                             </article>
                             <aside className="aside-2">
@@ -90,7 +87,6 @@ OldPaint.UI = (function () {
                                             moveLayer={this.moveLayer}
                                             hideLayer={this.hideLayer}
                                             showLayer={this.showLayer}/>
-
                             </aside>
 
                         </section>
@@ -104,9 +100,6 @@ OldPaint.UI = (function () {
 
         // whatever may need to be done prior to drawing a stroke
         prepareStroke: function (erase) {
-            // make sure the brush has the right color
-            this.refs.brushes.getCurrent().setColor(
-                this.refs.palette.getCurrent(), this.state.palette);
             return this.clearEphemeral();
         },
 
@@ -115,12 +108,13 @@ OldPaint.UI = (function () {
         // these appropriately until the stream ends, e.g. by joining them
         // with lines.
         drawStroke: function (stroke, update) {
-            this.refs.tools.getCurrent().draw(
-                this.refs.layers.getCurrent(),
-                this.refs.brushes.getCurrent(), this.refs.palette.getCurrent(),
-                update.bind(this, this.refs.layers.getCurrent()),
-                this.prepareStroke, this.finishStroke,
-                this.setRegion, this.setCoords, stroke);
+            var tool = this.refs.tools.getCurrent();
+            tool.draw(this.refs.layers.getCurrent(),
+                      this.refs.brushes.getCurrent(),
+                      this.refs.palette.getCurrent(),
+                      update.bind(this, this.refs.layers.getCurrent()),
+                      this.prepareStroke, this.finishStroke,
+                      this.setRegion, this.setCoords, stroke);
         },
 
         // after a stroke is done, we need to create an undo action and
@@ -129,7 +123,7 @@ OldPaint.UI = (function () {
             var layer = this.refs.layers.getCurrent(),
                 patch = layer.patchFromBackup(rect),
                 action = ["draw", {patch: patch, layer: layer,
-                                   type: "draw", 
+                                   type: "draw",
                                    tool: this.refs.tools.getCurrent(),
                                    brush: this.refs.brushes.getCurrent().previewURL,
                                    color: this.state.palette.colors[
@@ -145,6 +139,9 @@ OldPaint.UI = (function () {
         drawEphemeral: function (pt, update) {
             if (this.refs.tools.getCurrent().showEphemeral) {
                 var oldRect = this.clearEphemeral();
+                // make sure the brush has the current color (inefficient?)
+                this.refs.brushes.getCurrent().setColor(
+                    this.refs.palette.getCurrent(), this.state.palette);
                 this._ephemeralRect = this.refs.layers.getCurrent().draw_brush(
                     this.refs.brushes.getCurrent().draw, pt);
                 update(
@@ -220,8 +217,8 @@ OldPaint.UI = (function () {
         selectColor: function (colorN) {
             //this.setState({currentColor: colorN});
 
-            this.state.brushes.forEach(
-                function (b) {b.setColor(colorN, this.state.palette);}.bind(this));
+            _.each(this.state.brushes,
+                   function (b) {b.setColor(colorN, this.state.palette);}.bind(this));
         },
 
         setColor: function (colorN, value) {
@@ -230,6 +227,13 @@ OldPaint.UI = (function () {
             this.setState(
                 {palette: new OldPaint.Palette(colors)}
             );
+        },
+
+        makeBrush: function (region) {
+            var layer = this.refs.layers.getCurrent(),
+                image = layer.subImage(region),
+                brush = new OldPaint.Brush(region, image);
+            this.setState({brushes: _.conj(this.state.brushes, brush)});
         },
 
         // put an action on the undo stack
@@ -325,7 +329,9 @@ OldPaint.UI = (function () {
             this.updateViewPort(this.props.size);
             this._dirtyRect = null;
             this._scheduledRedraw = null;
-            var node = this.getDOMNode().parentNode;
+            //var node = this.getDOMNode().parentNode;
+            var node = this.refs.frame.getDOMNode();
+            console.log("node", node);
             OldPaint.setupInput(node, this, this.drawStroke, this.drawEphemeral);
         },
 
@@ -349,6 +355,7 @@ OldPaint.UI = (function () {
                     <div ref="frame" className={classes}></div>
                     {_.into_array(layers)}
                     <Region ref="region" viewport={this.state.viewport}
+                            makeBrush={this.makeBrush}
                             rect={this.state.region}/>
                 </div>
             );
@@ -371,8 +378,6 @@ OldPaint.UI = (function () {
                 image_height: size.height
             });
 
-            // viewport.center_on({x: size.width/2, y: size.height/2},
-            //                    {x: bbox.width/2, y: bbox.height/2});
             viewport.center();
             this.setState({viewport: viewport});
         },
@@ -384,8 +389,9 @@ OldPaint.UI = (function () {
         updateFrame: function () {
             if (this.state.viewport) {
                 var frame = this.refs.frame.getDOMNode();
-                var rect = this.state.viewport.from_image_rect(this.state.viewport.visibleImageRect);
-
+                // var rect = this.state.viewport.from_image_rect(
+                //     this.state.viewport.visibleImageRect);
+                var rect = this.state.viewport.total_rect();
                 frame.style.top = rect.top + "px";
                 frame.style.left =  rect.left + "px";
                 frame.style.width = rect.width + "px";
@@ -393,12 +399,24 @@ OldPaint.UI = (function () {
             }
         },
 
-        setRegion: function (rect) {
-            this.setState({region: rect});
+        setRegion: function (rect, release) {
+            if (!this._regionIsReleased) {
+                this.setState({region: rect});
+                self._regionIsReleased = release;
+            } else {
+                this._regionIsReleased = false;
+                this.setState({region: null});
+            }
+        },
+
+        makeBrush: function () {
+            this.props.makeBrush(this.state.region);
+            this.setState({region: null});
+            this._regionIsReleased = false;
         },
 
         drawStroke: function (stroke) {
-            this.props.stroke(stroke, this.update);
+            this.props.draw(stroke, this.update);
         },
 
         drawEphemeral: function (pt) {
@@ -550,12 +568,16 @@ OldPaint.UI = (function () {
                              width: rect.width + "px",
                              height: rect.height + "px"
                          }}>
-                        <div className="inner"/>
+                        <div className="inner" onClick={this.finish}/>
                     </div>
                 );
             } else {
                 return <div className="region invisible"></div>;
             }
+        },
+
+        finish: function () {
+            this.props.makeBrush();
         }
 
     });
@@ -615,7 +637,7 @@ OldPaint.UI = (function () {
         },
 
         // Drag'n drop
-        
+
         dragStart: function(e) {
             this.dragged = e.currentTarget;
             this.siblings = this.dragged.parentNode.children;
@@ -730,7 +752,8 @@ OldPaint.UI = (function () {
                 tools = this.props.tools.map(function (t) {
                     var classes = cx({tool: true,
                                       selected: t == current});
-                    return <img onClick={function () {select(t);}} src={t.icon}
+                    return <img key={t.name} src={t.icon}
+                                onClick={function () {select(t);}}
                                 className={classes}/>;
             }.bind(this));
 
@@ -760,20 +783,20 @@ OldPaint.UI = (function () {
         },
 
         componentWillMount: function () {
-            this.setState({current: this.props.brushes[0]});
+            this.setState({current: _.get(this.props.brushes, 0)});
         },
 
         render: function () {
-            var brushes = this.props.brushes.map(function (b) {
+            var brushes = _.map(function (b) {
                 return <BrushPreview key={b.key} brush={b}
                 selected={this.state.current === b}
                 select={this.select}/>;
-            }.bind(this));
+            }.bind(this), this.props.brushes);
             return (
                     <div>
                     <div className="title"> Brushes </div>
                     <div className="container brushes">
-                    {brushes}
+                    {_.into_array(brushes)}
                 </div>
                     </div>
             );
@@ -834,9 +857,9 @@ OldPaint.UI = (function () {
                         {swatch: true, selected: current == i});
                 return <td key={i} className={classes}
                            onClick={function () {select(i);}}>
-                    <div className={classes}
-                         style={{backgroundColor: "#" + hex}}> </div>
-                    </td>;
+                           <div className={classes}
+                                style={{backgroundColor: "#" + hex}}> </div>
+                       </td>;
             }
 
             var colors = _.map(

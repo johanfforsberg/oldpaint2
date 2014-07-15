@@ -19,14 +19,12 @@ OldPaint.Tools = (function () {
         function tool(pts) {
             // for each pair of points, draw a line between them
             return pts
-                .slidingWindow(2, 2)
+                .slidingWindow(2)
                 .map(layer.draw_line.bind(layer), _brush);
         }
 
         // take the correct version of the brush
         var _brush = stroke.erase? brush.erase : brush.draw;
-
-        console.log("stroke", stroke);
 
         before();
 
@@ -173,9 +171,10 @@ OldPaint.Tools = (function () {
 
         var stream = tool(stroke.coords);
         stream
-            .fold(null, function (v) {return v;})
+            .fold(null, function (v, w) {return w;})
             .onValue(function (r) {
-
+                //console.log()
+                setRegion(r, true);
             });
     };
 

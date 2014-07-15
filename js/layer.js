@@ -77,6 +77,13 @@ OldPaint.Layer = (function () {
         return null;
     };
 
+    Layer.prototype.subImage = function (rect) {
+        var truncrect = OldPaint.Util.intersect(rect, this.image.rect());
+        var sub = OldPaint.Util.copy_canvas(this.image.image.get_data(), rect);
+        return new OldPaint.Image({indexed: true, size: rect,
+                                   image: sub});
+    };
+
     Layer.prototype.patchFromBackup = function (rect) {
         var truncrect = OldPaint.Util.intersect(rect, this.image.rect());
         return new OldPaint.Patch(truncrect, this._backup);

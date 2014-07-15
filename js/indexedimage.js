@@ -101,12 +101,9 @@ OldPaint.IndexedImage = function (data) {
     };
 
     this.draw_line = function (pt1, pt2, brush) {
-        //console.log("draw_line", startPt.x, startPt.y, endPt.x, endPt.y, color);
-	//endPt = endPt | startPt;
-        //console.log("brush", pt1, pt2, brush);
-        var rect = OldPaint.Draw.drawLineWithBrush(this.icontext, pt1.x, pt1.y, pt2.x, pt2.y,
-                                                   brush.image.icanvas);
-        //this.updateCanvas(rect, palette);
+	pt2 = pt2 || pt1;
+        var rect = OldPaint.Draw.drawLineWithBrush(
+            this.icontext, pt1.x, pt1.y, pt2.x, pt2.y, brush.image.icanvas);
         return rect;
     };
 
@@ -124,10 +121,6 @@ OldPaint.IndexedImage = function (data) {
             rect4 = OldPaint.Draw.drawLineWithBrush(this.icontext, startpt.x, startpt.y+size.y,
 			                            startpt.x, startpt.y, brush.image.icanvas);
 
-        // this.updateCanvas(rect1, palette);
-        // this.updateCanvas(rect2, palette);
-        // this.updateCanvas(rect3, palette);
-        // this.updateCanvas(rect4, palette);
         var rect = OldPaint.Util.intersect(this.rect, OldPaint.Util.union(rect1, rect2));
         return rect;
     };
@@ -139,8 +132,6 @@ OldPaint.IndexedImage = function (data) {
         var w = Math.max(size.x, -size.x);
         var h = Math.max(size.y, -size.y);
         this.icontext.fillRect(x0, y0, w, h);
-        // this.updateCanvas({left:x0, top:y0,
-        //                    width:w, height:h}, palette);
         return {left:x0, top:y0,
                 width:w, height:h};
     };
@@ -148,8 +139,6 @@ OldPaint.IndexedImage = function (data) {
     this.draw_ellipse = function (pt, size, brush) {
         var rect = OldPaint.Draw.drawEllipseWithBrush(this.icontext, pt.x, pt.y,
 					              size.x, size.y, brush.image.icanvas);
-        //this.updateCanvas(rect, palette);
-        //return rect;
         return OldPaint.Util.intersect(this.rect, rect);
     };
 

@@ -20,6 +20,15 @@ OldPaint.ViewPort = (function () {
         this.visibleImageRect = OldPaint.Util.visible(this);  //.visible();
     };
 
+    ViewPort.prototype.total_rect = function () {
+        var topleft = this.from_image_coords({x: 0, y: 0}),
+            botright = this.from_image_coords(
+                {x: this.image_width, y: this.image_height});
+        return OldPaint.Util.rect(topleft.x, topleft.y,
+                                  botright.x - topleft.x + 1,
+                                  botright.y - topleft.y + 1);
+    };
+
     ViewPort.prototype.set_zoom = function (zoom) {
         this._zoom = zoom;
         this.scale(Math.pow(2, zoom));
