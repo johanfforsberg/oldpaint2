@@ -112,7 +112,7 @@ OldPaint.UI = (function () {
             tool.draw(this.refs.layers.getCurrent(),
                       this.refs.brushes.getCurrent(),
                       this.refs.palette.getCurrent(),
-                      update.bind(this, this.refs.layers.getCurrent()),
+                      update.bind(null, this.refs.layers.getCurrent()),
                       this.prepareStroke, this.finishStroke,
                       this.setRegion, this.setCoords, stroke);
         },
