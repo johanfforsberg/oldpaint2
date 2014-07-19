@@ -152,6 +152,16 @@ OldPaint.IndexedImage = function (data) {
     };
 
     this.blit = function(canvas, fromrect, torect, clear) {
+        if (torect.left < 0) {
+            fromrect.left -= torect.left;
+            torect.width = fromrect.width += torect.left;
+            torect.left = 0;
+        }
+        if (torect.top < 0) {
+            fromrect.top -= torect.top;
+            torect.height = fromrect.height += torect.top;
+            torect.top = 0;
+        }
         if (clear) {
 	    this.clear(torect);
         }
@@ -165,8 +175,6 @@ OldPaint.IndexedImage = function (data) {
         catch(e) {
             torect = null;
         }
-        //if (torect)
-            //this.updateCanvas(torect, palette);
         return torect;
     };
 
@@ -176,8 +184,6 @@ OldPaint.IndexedImage = function (data) {
         var pixbuf = this.icontext.getImageData(0, 0, width, height);
         var rect = OldPaint.Draw.bucketfill(pixbuf.data, width, height, pt, color);
         this.update(pixbuf, rect.left, rect.top, rect.width, rect.height, true);
-        //this.updateCanvas(rect, palette);
-        console.log("filled", rect);
         return rect;
     };
 

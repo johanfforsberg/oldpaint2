@@ -164,7 +164,7 @@ OldPaint.Tools = (function () {
                 .combine(pts, function(p0, p1) {  // together with the latest
                     var size = OldPaint.Util.diff(p0, p1),
                         rect = OldPaint.Util.rect(p0.x, p0.y, size.x, size.y);
-                    setRegion(rect);
+                    setRegion(rect, false);
                     return rect;
                 });
         }
@@ -173,7 +173,7 @@ OldPaint.Tools = (function () {
         stream
             .fold(null, function (v, w) {return w;})
             .onValue(function (r) {
-                //console.log()
+                console.log("finish");
                 setRegion(r, true);
             });
     };

@@ -104,7 +104,7 @@ OldPaint.UI = (function () {
         },
 
         // Draw a stroke using the current tool. The stroke contains a
-        // stream of mouse coordinates, it is up to the tool to handle
+        // stream of mouse coordinates. It is up to the tool to handle
         // these appropriately until the stream ends, e.g. by joining them
         // with lines.
         drawStroke: function (stroke, update) {
@@ -144,9 +144,8 @@ OldPaint.UI = (function () {
                     this.refs.palette.getCurrent(), this.state.palette);
                 this._ephemeralRect = this.refs.layers.getCurrent().draw_brush(
                     this.refs.brushes.getCurrent().draw, pt);
-                update(
-                    this.refs.layers.getCurrent(),
-                    OldPaint.Util.union(oldRect, this._ephemeralRect));
+                update(this.refs.layers.getCurrent(),
+                       OldPaint.Util.union(oldRect, this._ephemeralRect));
             }
         },
 
@@ -205,8 +204,8 @@ OldPaint.UI = (function () {
             this.setState({layers: this.state.layers});
         },
 
-        setRegion: function (rect) {
-            this.refs.drawing.setRegion(rect);
+        setRegion: function (rect, release) {
+            this.refs.drawing.setRegion(rect, release);
         },
 
         setCoords: function (coords) {
@@ -383,7 +382,7 @@ OldPaint.UI = (function () {
         },
 
         redraw: function () {
-            this.updateViewPort();
+            this.updateViewPort(this.props.size);
         },
 
         updateFrame: function () {
@@ -400,10 +399,11 @@ OldPaint.UI = (function () {
         },
 
         setRegion: function (rect, release) {
-            if (!this._regionIsReleased) {
+            if (!this._regionIsReleased && rect.width > 0 && rect.height > 0) {
                 this.setState({region: rect});
-                self._regionIsReleased = release;
+                this._regionIsReleased = release;
             } else {
+                console.log("reset region");
                 this._regionIsReleased = false;
                 this.setState({region: null});
             }
