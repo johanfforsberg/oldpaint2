@@ -1,6 +1,7 @@
 body {
     font-family: "sans-serif";
     overflow: hidden;
+    font-size: small;
 }
 
 /* general style stuff */
@@ -21,9 +22,9 @@ button:hover {
     background-color: #ddd;
 }
 
-button.active {
-    border-color: #999;
-    background-color: #d0d0d0;
+button.selected {
+    border-color: #aaa;
+    background-color: white;
 }
 
 
@@ -147,10 +148,15 @@ canvas.brush-preview {
 
 /* tools */
 
-img.tool {
+.tool img {
     display: inline;
-    margin: 1px;
-    padding: 3px;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+}
+
+.tools button {
+    padding: 0;
 }
 
 /* palette */

@@ -872,9 +872,10 @@ OldPaint.UI = (function () {
                 tools = this.props.tools.map(function (t) {
                     var classes = cx({tool: true,
                                       selected: t == current});
-                    return <img key={t.name} src={t.icon}
-                                onClick={function () {select(t);}}
-                                className={classes}/>;
+                    return <button key={t.name} className={classes}
+                                   onClick={function () {select(t);}}>
+                               <img src={t.icon}/>
+                           </button>;
             }.bind(this));
 
             return <div>
