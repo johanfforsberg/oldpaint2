@@ -54,8 +54,10 @@ body {
     flex: 1 1 auto;
     background-color: rgb(100,100,100);
     overflow: hidden;
+    height: 100%;
 }
 
 .wrapper footer {
+    z-index: 100;
     background-color: gray;
 }

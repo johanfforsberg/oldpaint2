@@ -1,7 +1,68 @@
 body {
-    font-family: Sans-Serif;
+    font-family: "sans-serif";
     overflow: hidden;
 }
+
+/* general style stuff */
+
+button {
+    border-width: 2px 0 0 2px;
+    padding: 1px 3px 1px 3px; */
+    border-color: #ddd;
+    outline: solid #000 2px;
+    background-color: #aaa;
+    margin: 1px;
+    /* font-family : topaz, "Lucida Console", monospace, Monaco;     */
+    color: #000;
+    display: table-cell;
+}
+
+button:hover {
+    background-color: #ddd;
+}
+
+button.active {
+    border-color: #999;
+    background-color: #d0d0d0;
+}
+
+
+div.title {
+    background-color: rgb(170,170,170);
+    width: 100%;
+    font-weight: bold;
+    text-align: center;
+}
+
+div.container {
+    padding: 3px;
+    max-height: 100%;
+    overflow-y: auto;
+    border-bottom: 1px solid grey;
+}
+
+div.subcontainer {
+    padding: 3px;
+}
+
+.invisible {
+    display: none;
+}
+
+.inert {
+    pointer-events: none;
+}
+
+.selected {
+    background-color: rgb(230,230,230);
+}
+
+.droppable * {
+    pointer-events: none;
+}
+
+
+/* drawing */
 
 div.drawing {
     width: 100%;
@@ -24,13 +85,6 @@ canvas.layer {
     pointer-events: none;
 }
 
-/* canvas.temporary { */
-/*     position: absolute; */
-/*     background-color: red; */
-/*     pointer-events: none; */
-/* } */
-
-
 .layers td {
     vertical-align: top;
 }
@@ -39,24 +93,6 @@ canvas.layer {
     width: 100%;
     height: 10px;
     background: rgb(150,150,150);
-}
-
-.droppable * {
-    pointer-events: none;
-}
-
-div.title {
-    background-color: rgb(170,170,170);
-    width: 100%;
-    font-weight: bold;
-    text-align: center;
-}
-
-div.container {
-    padding: 3px;
-    max-height: 100%;
-    overflow-y: auto;
-    border-bottom: 1px solid grey;
 }
 
 .layer-preview {
@@ -80,8 +116,22 @@ div.container {
 
 }
 
-div.brush-container {
+
+/* brushes */
+
+div.container.brushes {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.container.brushes table {
+    border-spacing: 0;
+}
+
+
+.container.brushes tr {
     padding: 2px;
+    float: none;
     /* border: 1px solid black; */
 }
 
@@ -91,23 +141,19 @@ canvas.brush-preview {
     background-color: white;
 }
 
+.container.brushes .description {
+    font-size: small;
+}
+
+/* tools */
+
 img.tool {
     display: inline;
     margin: 1px;
     padding: 3px;
 }
 
-.invisible {
-    display: none;
-}
-
-.inert {
-    pointer-events: none;
-}
-
-.selected {
-    background-color: rgb(230,230,230);
-}
+/* palette */
 
 table.palette {
     width: 100%;
@@ -141,13 +187,8 @@ table.palette {
     color: red;
 }
 
-div.message {
-    float: left;
-}
 
-div.coordinates {
-    float: right;
-}
+/* actions */ 
 
 .actions table {
     width: 100%;
@@ -156,6 +197,7 @@ div.coordinates {
 
 .action .desc {
     width: 100%;
+    font-size: small;
 }
 
 .action .icon {
@@ -242,4 +284,15 @@ tr.action:hover {
 .region .handle.bottomleft {
     left: -12px;
     bottom: -12px;
+}
+
+
+/* status */
+
+div.message {
+    float: left;
+}
+
+div.coordinates {
+    float: right;
 }
