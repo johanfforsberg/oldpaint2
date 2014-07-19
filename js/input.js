@@ -21,8 +21,8 @@ OldPaint.setupInput = function (element, view, drawStroke, drawEphemeral) {
             .filter(function (p) {return !!p;})
             .skipDuplicates(OldPaint.Util.compare),
         mouse_out = Bacon.fromEventTarget(element, "mouseout").map(false),
-        wheel_event = (document.onmousewheel !== undefined ? "mousewheel" : "wheel"),
-        mouse_wheel = Bacon.fromEventTarget(document, wheel_event)
+        wheel_event = (element.onmousewheel !== undefined ? "mousewheel" : "wheel"),
+        mouse_wheel = Bacon.fromEventTarget(element, wheel_event)
             // Note: this may only cover FF and webkit
             .map(function (e) {return OldPaint.Util.sign(wheel_event == "wheel" ?
                                                 -e.deltaY : e.wheelDeltaY);});
