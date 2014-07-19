@@ -155,21 +155,46 @@ OldPaint.Tools = (function () {
     };
 
     var region = function (layer, brush, color, update, before, after,
-                           setRegion, setCoords, stroke) {
+                           setRegion, setCoords, stroke, corner, rect) {
 
         var oldRect = null;  // Exercise: make this unnecessary
 
         function tool(pts) {
             return pts.take(1)  // use the starting point
                 .combine(pts, function(p0, p1) {  // together with the latest
-                    var size = OldPaint.Util.diff(p0, p1),
-                        rect = OldPaint.Util.rect(p0.x, p0.y, size.x, size.y);
+                    var rect = OldPaint.Util.rectify(p0, p1);
                     setRegion(rect, false);
                     return rect;
                 });
         }
 
-        var stream = tool(stroke.coords);
+        function get_opposite_point(rect, corner) {
+            switch (corner) {
+            case "topleft":
+                return {x: rect.left + rect.width, y: rect.top + rect.height};
+            case "topright":
+                return {x: rect.left, y: rect.top + rect.height};
+            case "bottomright":
+                return {x: rect.left, y: rect.top};
+            case "bottomleft":
+                return {x: rect.left + rect.width, y: rect.top};
+            }
+            return null;
+        }
+        
+        function corner_tool(pts) {
+            var opposite = get_opposite_point(rect, corner);
+            return Bacon.once(opposite).combine(pts, function (p0, p1) {
+                var r = OldPaint.Util.rectify(p0, p1);
+                setRegion(r, false);
+                return r;
+            });
+        }
+
+        if (corner) 
+            var stream = corner_tool(stroke.coords.throttle(50));
+        else
+            var stream = tool(stroke.coords);
         stream
             .fold(null, function (v, w) {return w;})
             .onValue(function (r) {

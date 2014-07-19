@@ -1,10 +1,9 @@
-
 body {
-  font-family: Sans-Serif;
+    font-family: Sans-Serif;
+    overflow: hidden;
 }
 
 div.drawing {
-    position: relative;
     width: 100%;
     height: 100%;
 }
@@ -22,7 +21,6 @@ div.drawing > div.frame {
 
 canvas.layer {
     position: absolute;
-    /* background-color: rgba(255,255,255,0.5); */
     pointer-events: none;
 }
 
@@ -44,7 +42,7 @@ canvas.layer {
 }
 
 .droppable * {
-    pointer-events: none;    
+    pointer-events: none;
 }
 
 div.title {
@@ -103,8 +101,12 @@ img.tool {
     display: none;
 }
 
+.inert {
+    pointer-events: none;
+}
+
 .selected {
-    background-color: white;
+    background-color: rgb(230,230,230);
 }
 
 table.palette {
@@ -150,7 +152,7 @@ div.coordinates {
 .actions table {
     width: 100%;
     border-spacing: 0;
-}    
+}
 
 .action .desc {
     width: 100%;
@@ -182,13 +184,62 @@ tr.action:hover {
 }
 
 
+/* selection region */
+
 .region {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.region .outer {
     position: absolute;
+}
+
+.region .inner-1 {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     outline: 2px solid lightgrey;
 }
 
-.region .inner {
+.region .inner-2 {
+    position: absolute;
     width: 100%;
     height: 100%;
     outline: 2px dashed grey;
+    pointer-events: auto;
+}
+
+.region .inner-2:hover {
+    background-color: rgba(255,0,0,0.1);
+}
+
+.region .handle {
+    position: absolute;
+    background-color: red;
+    width: 10px;
+    height: 10px;
+    outline: 2px solid rgba(255,255,255,0.5);
+    pointer-events: auto;
+}
+
+.region .handle.topleft {
+    left: -12px;
+    top: -12px;
+}
+
+.region .handle.topright {
+    right: -12px;
+    top: -12px;
+}
+
+.region .handle.bottomright {
+    right: -12px;
+    bottom: -12px;
+}
+
+.region .handle.bottomleft {
+    left: -12px;
+    bottom: -12px;
 }

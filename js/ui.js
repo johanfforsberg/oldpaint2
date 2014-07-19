@@ -320,7 +320,7 @@ OldPaint.UI = (function () {
     var DrawingView = React.createClass({
 
         getInitialState: function () {
-            return { viewport: null, region: null };
+            return { viewport: null };
         },
 
         componentDidMount: function () {
@@ -351,11 +351,11 @@ OldPaint.UI = (function () {
 
             return (
                 <div className="drawing">
-                    <div ref="frame" className={classes}></div>
+                    <div ref="frame" className={classes}/>
                     {_.into_array(layers)}
                     <Region ref="region" viewport={this.state.viewport}
-                            makeBrush={this.makeBrush}
-                            rect={this.state.region}/>
+                            finish={this.makeBrush}
+                            cancel={this.cancelBrush}/>
                 </div>
             );
         },
@@ -399,20 +399,15 @@ OldPaint.UI = (function () {
         },
 
         setRegion: function (rect, release) {
-            if (!this._regionIsReleased && rect.width > 0 && rect.height > 0) {
-                this.setState({region: rect});
-                this._regionIsReleased = release;
-            } else {
-                console.log("reset region");
-                this._regionIsReleased = false;
-                this.setState({region: null});
-            }
+            this.refs.region.setRect(rect, release);
         },
 
-        makeBrush: function () {
-            this.props.makeBrush(this.state.region);
-            this.setState({region: null});
-            this._regionIsReleased = false;
+        makeBrush: function (rect) {
+            this.props.makeBrush(rect);
+        },
+
+        cancelBrush: function () {
+            this.refs.region.setRect(null);
         },
 
         drawStroke: function (stroke) {
@@ -557,18 +552,44 @@ OldPaint.UI = (function () {
 
     var Region = React.createClass({
 
+        getInitialState: function () {
+            return {rect: null, released: false};
+        },
+
         render: function () {
-            if (this.props.viewport && this.props.rect) {
-                var rect = this.props.viewport.from_image_rect(this.props.rect);
+            // TODO: maybe make the handles into own component?
+            if (this.props.viewport && this.state.rect) {
+                var rect = this.props.viewport.from_image_rect(this.state.rect);
                 return (
-                    <div className="region"
-                         style={{
-                             top: rect.top + "px",
-                             left: rect.left + "px",
-                             width: rect.width + "px",
-                             height: rect.height + "px"
-                         }}>
-                        <div className="inner" onClick={this.finish}/>
+                    <div ref="background" className={React.addons.classSet({
+                            region: true,
+                            inert: this.state.released})}>
+                        <div className="outer"
+                            style={{
+                                top: rect.top + "px",
+                                left: rect.left + "px",
+                                width: rect.width + "px",
+                                height: rect.height + "px"
+                            }}>
+                            <div className={React.addons.classSet({
+                                    handle: true, topleft: true,
+                                    invisible: !this.state.released})}
+                                 onMouseDown={this.handleGrabbed}/>
+                            <div className={React.addons.classSet({
+                                    handle: true, topright: true,
+                                    invisible: !this.state.released})}
+                                 onMouseDown={this.handleGrabbed}/>
+                            <div className={React.addons.classSet({
+                                    handle: true, bottomright: true,
+                                    invisible: !this.state.released})}
+                                 onMouseDown={this.handleGrabbed}/>
+                            <div className={React.addons.classSet({
+                                    handle: true, bottomleft: true,
+                                    invisible: !this.state.released})}
+                                 onMouseDown={this.handleGrabbed}/>
+                            <div className="inner-1"></div>
+                            <div className="inner-2" onClick={this.finish}/>
+                        </div>
                     </div>
                 );
             } else {
@@ -576,8 +597,91 @@ OldPaint.UI = (function () {
             }
         },
 
+        setRect: function (rect, release) {
+            if (!this.state.released && rect.width > 0 && rect.height > 0) {
+                // don't allow the region to extend outside the image
+                var correct = OldPaint.Util.intersect(
+                    rect, this.props.viewport.image_rect());
+                this.setState({rect: correct, released: release});
+            } else {
+                this.setState({rect: null, released: false});
+            }
+        },
+
+        // finish the region (e.g. to create a brush);
         finish: function () {
-            this.props.makeBrush();
+            console.log("finish");
+            this.props.finish(this.state.rect);
+            this.setRect(null);
+        },
+
+        // The user has stopped modifying the region (released the mouse button)
+        release: function () {
+            this.setState({released: true});
+            this.refs.background.getDOMNode().removeEventListener(
+                "mousemove", this.handleMoved);
+            this._dragstart = this._corner = null;
+        },
+        
+        // return whichever corner the element represents
+        _get_corner: function (el) {
+            if (el.classList.contains("topleft")) return "topleft";
+            if (el.classList.contains("topright")) return "topright";
+            if (el.classList.contains("bottomright")) return "bottomright";
+            if (el.classList.contains("bottomleft")) return "bottomleft";
+            return null;
+        },
+
+        // return the corner and the opposite corner's points
+        _get_points: function (rect, corner) {
+            switch (corner) {
+            case "topleft":
+                return [{x: rect.left, y: rect.top},
+                        {x: rect.left + rect.width, y: rect.top + rect.height}];
+            case "topright":
+                return [{x: rect.left + rect.width, y: rect.top},
+                        {x: rect.left, y: rect.top + rect.height}];
+            case "bottomright":
+                return [{x: rect.left + rect.width, y: rect.top + rect.height},
+                        {x: rect.left, y: rect.top}];
+            case "bottomleft":
+                return [{x: rect.left, y: rect.top + rect.height},
+                        {x: rect.left + rect.width, y: rect.top}];
+            }
+            return null;
+        },
+
+        // The user is grabbing a corner handle
+        handleGrabbed: function (event) {
+            this._corner = this._get_corner(event.target);
+            console.log("handleGrabbed", this._corner);
+            this.setState({released: false});
+            this.refs.background.getDOMNode().addEventListener(
+                "mousemove", this.handleMoved);
+            document.addEventListener("mouseup", this.release);
+        },
+        
+        // the user is dragging one of the corner handles
+        handleMoved: function (event) {
+            if (!this._dragstart) {
+                var points = this._get_points(this.state.rect, this._corner);
+                this._dragstart = {
+                    handle: this._corner,
+                    point: points[0],
+                    opposite_point: points[1],
+                    x: event.clientX,
+                    y: event.clientY};
+            } else {
+                var scale = this.props.viewport.scale,
+                    deltaX = Math.round((event.clientX - this._dragstart.x) /
+                                        scale),
+                    deltaY = Math.round((event.clientY - this._dragstart.y) /
+                                        scale),
+                    point = {x: this._dragstart.point.x + deltaX,
+                             y: this._dragstart.point.y + deltaY};
+                this.setRect(OldPaint.Util.rectify(
+                    this._dragstart.opposite_point, point));
+            }
         }
 
     });
@@ -1029,11 +1133,11 @@ OldPaint.UI = (function () {
         },
 
         hover: function () {
-            this.props.setRegion(this.props.data.patch.rect);
+            //this.props.setRegion(this.props.data.patch.rect);
         },
 
         unHover: function () {
-            this.props.setRegion(null);
+            //this.props.setRegion(null);
         }
 
 
