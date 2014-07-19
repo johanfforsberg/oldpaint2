@@ -27,8 +27,11 @@ OldPaint.UI = (function () {
                 size: {width: 320, height: 256},
                 layers: _.vector(),
                 palette: new OldPaint.Palette(colors),
-                brushes: _.vector(new OldPaint.Brush({width: 1, height: 1}, "rectangle", 1),
-                                  new OldPaint.Brush({width: 7, height: 5}, "ellipse", 1)),
+                brushes: _.vector(
+                    new OldPaint.Brush({width: 1, height: 1}, "rectangle", 1),
+                    new OldPaint.Brush({width: 7, height: 5}, "ellipse", 1),
+                    new OldPaint.Brush({width: 3, height: 6}, "rectangle", 1)),
+                user_brushes: _.vector(),
                 undos: _.vector(), redos: _.list(),
                 statusMessages: ["Hello! Welcome to OldPaint2!"]
             };
@@ -52,7 +55,8 @@ OldPaint.UI = (function () {
                                            tools={this.state.tools}/>
 
                                 <BrushesList ref="brushes"
-                                             brushes={this.state.brushes}/>
+                                             brushes={this.state.brushes}
+                                             userBrushes={this.state.user_brushes}/>
 
                                 <PaletteView ref="palette"
                                              palette={this.state.palette}
@@ -71,6 +75,7 @@ OldPaint.UI = (function () {
                                              layers={this.state.layers}
                                              palette={this.state.palette}
                                              region={this.state.currentRegion}
+                                             regionTool={OldPaint.Tools.region}
                                              draw={this.drawStroke}
                                              drawEphemeral={this.drawEphemeral}
                                              undo={this.undo}
@@ -133,6 +138,9 @@ OldPaint.UI = (function () {
             actionNumber += 1;
             this.pushUndo(action);
             layer.backup();
+            // if (stroke.erase) {
+            //     layer.updateAlpha(rect, this.state.palette);
+            // }
         },
 
         // draw something temporary, such as the brush "preview"
@@ -217,7 +225,8 @@ OldPaint.UI = (function () {
             //this.setState({currentColor: colorN});
 
             _.each(this.state.brushes,
-                   function (b) {b.setColor(colorN, this.state.palette);}.bind(this));
+                   function (b) {b.setColor(colorN, this.state.palette);}
+                       .bind(this));
         },
 
         setColor: function (colorN, value) {
@@ -231,8 +240,12 @@ OldPaint.UI = (function () {
         makeBrush: function (region) {
             var layer = this.refs.layers.getCurrent(),
                 image = layer.subImage(region),
-                brush = new OldPaint.Brush(region, image);
-            this.setState({brushes: _.conj(this.state.brushes, brush)});
+                brush = new OldPaint.ImageBrush(image);
+            brush.update(this.state.palette);
+            this.setState({user_brushes: truncate(_.conj(
+                this.state.user_brushes, brush), 5)});
+            this.refs.tools.select(_.get(this.state.tools, 0));
+            this.refs.brushes.select(brush);
         },
 
         // put an action on the undo stack
@@ -515,7 +528,8 @@ OldPaint.UI = (function () {
 
         // redraw part of the canvas
         update: function (rect, updateCanvas) {
-            var visRect = OldPaint.Util.intersect(this.props.viewport.visibleImageRect, rect);
+            var visRect = OldPaint.Util.intersect(
+                this.props.viewport.visibleImageRect, rect);
             if (rect) {
                 var original = this.props.data.image.image;
                 if (updateCanvas) original.updateCanvas(rect, this.props.palette);
@@ -725,8 +739,10 @@ OldPaint.UI = (function () {
                         <div className="layers" onDragOver={this.dragOver}>
                             {_.into_array(_.reverse(layers))}
                         </div>
-                    <button onClick={this.props.addLayer}> Add </button>
-                    <button onClick={this.props.removeLayer}> Remove </button>
+                        <div className="subcontainer">
+                            <button onClick={this.props.addLayer}> Add </button>
+                            <button onClick={this.props.removeLayer}> Remove </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -895,14 +911,14 @@ OldPaint.UI = (function () {
                 return <BrushPreview key={b.key} brush={b}
                 selected={this.state.current === b}
                 select={this.select}/>;
-            }.bind(this), this.props.brushes);
+            }.bind(this), _.concat(this.props.brushes, this.props.userBrushes));
             return (
-                    <div>
+                <div>
                     <div className="title"> Brushes </div>
                     <div className="container brushes">
-                    {_.into_array(brushes)}
-                </div>
+                        {_.into_array(brushes)}
                     </div>
+                </div>
             );
         },
 
@@ -919,23 +935,34 @@ OldPaint.UI = (function () {
     var BrushPreview = React.createClass({
 
         componentDidMount: function () {
-            var context = this.refs.canvas.getDOMNode().getContext("2d");
-            context.drawImage(this.props.brush.preview.image.get_repr(),
-                              0, 0, this.props.brush.size.width,
-                              this.props.brush.size.height);
+            this.props.brush.renderPreview(this.refs.canvas.getDOMNode());
+            // var context = this.refs.canvas.getDOMNode().getContext("2d");
+            // context.drawImage(this.props.brush.preview.image.get_repr(),
+            //                   0, 0, this.props.brush.size.width,
+            //                   this.props.brush.size.height);
         },
 
         render: function () {
             var cx = React.addons.classSet;
             var classes = cx({"brush-container": true,
-                              "selected": this.props.selected});
-            return (<div key={this.props.key} className={classes}
-                    onClick={this.select}>
-                    <canvas ref="canvas" className="brush-preview" width={this.props.brush.size.width}
-                    height={this.props.brush.size.height}/>
-                    {this.props.brush.shape + " [" +
-                     this.props.brush.size.width + "·" + this.props.brush.size.height + "]"}
-                    </div>);
+                              "selected": this.props.selected}),
+                size = this.props.brush.getPreviewSize();
+            return (<table className="brush">
+                    <tr key={this.props.key} className={classes}
+                        onClick={this.select}>
+                        <td>
+                            <canvas ref="canvas" className="brush-preview"
+                                    width={size.width}
+                                    height={size.height}/>
+                        </td>
+                        
+                        <td className="description">
+                            {this.props.brush.shape + " [" +
+                             this.props.brush.size.width + "·" +
+                             this.props.brush.size.height + "]"}
+                        </td>
+                    </tr>
+                   </table>);
         },
 
         select: function () {

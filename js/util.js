@@ -131,6 +131,10 @@ OldPaint.Util = (function () {
 	return {left: left, top: top, width: width, height: height};
     },
 
+    Util.copy_rect = function(rect) {
+        return Util.rect(rect.left, rect.top, rect.width, rect.height);
+    },
+
     // Util.EventedOffset = EventedModel("EventedOffset")
     //     .attr("left", "number")
     //     .attr("top", "number");

@@ -18,30 +18,24 @@ OldPaint.Brush = (function () {
 
         this.key = key++;
 
-        if (isString(shape)) {
 
-            // shape is e.g. "ellipse"
+        // shape is e.g. "ellipse"
 
-            var spec = {indexed: false, size: size};
-            // shown by the UI preview
-	    this.preview = new OldPaint.Image(spec);
-            // used for drawing
-	    this.draw = new OldPaint.Image(spec);
-            // used for erasing
-	    this.erase = new OldPaint.Image(spec);
+        var spec = {indexed: false, size: size};
+        // shown by the UI preview
+	this.preview = new OldPaint.Image(spec);
+        // used for drawing
+	this.draw = new OldPaint.Image(spec);
+        // used for erasing
+	this.erase = new OldPaint.Image(spec);
 
-            // a temporary palette to draw the preview
-            var palette = new OldPaint.Palette([[0, 0, 0, 255]]);
+        // a temporary palette to draw the preview
+        var palette = new OldPaint.Palette([[0, 0, 0, 255]]);
 
-	    this[shape](this.preview, 0, palette);
+	this[shape](this.preview, 0, palette);
 
-            // TODO: erase-brush should be drawn on the fly
-	    this[shape](this.erase, 0, palette);
-        } else {
-            // presumably, shape is an image
-            this.size = shape.image.get_size();
-            this.preview = this.draw = shape;
-        }
+        // TODO: erase-brush should be drawn on the fly
+	this[shape](this.erase, 0, palette);
 
         this.previewURL = this.preview.image.get_repr().toDataURL();
     };
@@ -54,6 +48,20 @@ OldPaint.Brush = (function () {
         }
     };
 
+
+    Brush.prototype.getPreviewSize = function () {
+        var ratio = this.size.height / this.size.width,
+            width = Math.min(64, this.size.width);
+        return {width: width, height: Math.round(ratio * width)};
+    };
+    
+    Brush.prototype.renderPreview = function (canvas) {
+        var context = canvas.getContext("2d");
+        context.drawImage(this.preview.image.get_repr(),
+                          0, 0, this.size.width, this.size.height,
+                          0, 0, canvas.width, canvas.height);        
+    };
+    
     Brush.prototype.ellipse = function (image, color, palette) {
         console.log(palette);
 	image.image.draw_filled_ellipse(

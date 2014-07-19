@@ -13,10 +13,12 @@ OldPaint.Image = (function () {
         this.key = key;
         key += 1;
         this.title = spec.title;
-        this.image = new OldPaint.IndexedImage(spec);
+        if (spec.image instanceof OldPaint.IndexedImage ) {
+            this.image = spec.image;
+        } else {
+            this.image = new OldPaint.IndexedImage(spec);
+        }
         console.log("hej");
-
-        this.bus = new Bacon.Bus();
 
         this.visible = true;
     };
@@ -36,17 +38,19 @@ OldPaint.Image = (function () {
 
     Image.prototype._draw = function () {
         var rect = this._draw.apply(this, arguments);
-        // this.bus && this.bus.push(rect);
         return rect;
     };
 
     Image.prototype.draw_ephemeral = function () {
         var last_rect = this.restore_last(),
             rect = this._draw.apply(this, arguments);
-        //this.bus && this.bus.push(Util.union(rect, last_rect));
         return rect;
     };
 
+    Image.prototype.copy = function () {
+        return new Image({title: this.title, image: this.image.copy()});
+    };
+    
     return Image;
 
 })();

@@ -99,6 +99,9 @@ OldPaint.Layer = (function () {
         return patch2;
     };
 
+    Layer.prototype.updateAlpha = function (rect, palette) {
+        this.image.image.updateAlpha(rect, palette);
+    };
 
     return Layer;
 

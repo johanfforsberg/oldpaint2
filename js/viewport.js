@@ -25,10 +25,14 @@ OldPaint.ViewPort = (function () {
             botright = this.from_image_coords(
                 {x: this.image_width, y: this.image_height});
         return OldPaint.Util.rect(topleft.x, topleft.y,
-                                  botright.x - topleft.x + 1,
-                                  botright.y - topleft.y + 1);
+                                  botright.x - topleft.x,
+                                  botright.y - topleft.y);
     };
 
+    ViewPort.prototype.image_rect = function () {
+        return OldPaint.Util.rect(0, 0, this.image_width, this.image_height);
+    };
+    
     ViewPort.prototype.set_zoom = function (zoom) {
         this._zoom = zoom;
         this.scale(Math.pow(2, zoom));

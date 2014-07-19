@@ -282,20 +282,15 @@ OldPaint.IndexedImage = function (data) {
     };
 
     // make sure the alpha channel reflects the actual drawn parts.
-    // Note that this destroys the color info in transparent parts!
-    this.updateAlpha = function (rect) {
+    this.updateAlpha = function (rect, palette) {
         if (!this.indexed)
             return;
-        rect = OldPaint.Util.intersect(rect,
-			      {left:0, top:0,
-			       width: this.icanvas.width,
-			       height: this.icanvas.height});
-        console.log("updateAlpha: ", rect.left, rect.top, rect.width, rect.height);
+        rect = OldPaint.Util.intersect(rect, this.rect);
         if (rect) {
 	    var indpix = this.icontext.getImageData(rect.left, rect.top,
 						    rect.width, rect.height);
 	    for (var i=0; i<indpix.data.length; i+=4) {
-                indpix.data[i+3] = this.palette.colors[indpix.data[i]][3];
+                indpix.data[i+3] = palette.colors[indpix.data[i]][3];
 	    }
 	    this.icontext.putImageData(indpix, rect.left, rect.top);
         }
@@ -318,6 +313,12 @@ OldPaint.IndexedImage = function (data) {
         return this.canvas;
     };
 
+    this.copy = function () {
+        return new OldPaint.IndexedImage({indexed: this.indexed,
+                                          size: this.get_size(),
+                                          image: OldPaint.Util.copy_canvas(this.get_data())});
+    };
+    
     this.getpixel = function (x, y) {
         return this.icontext.getImageData(x, y, 1, 1).data[0];
     };
