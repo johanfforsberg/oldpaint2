@@ -114,7 +114,8 @@ OldPaint.IndexedImage = function (data) {
     };
 
     this.draw_rectangle = function (startpt, size, brush) {
-        var rect1 = OldPaint.Draw.drawLineWithBrush(this.icontext, startpt.x, startpt.y,
+        var rect1 = OldPaint.Draw.drawLineWithBrush(this.icontext,
+                                                    startpt.x, startpt.y,
                                                     startpt.x+size.x, startpt.y,
                                                     brush),
             rect2 = OldPaint.Draw.drawLineWithBrush(this.icontext,
@@ -124,7 +125,8 @@ OldPaint.IndexedImage = function (data) {
             rect3 = OldPaint.Draw.drawLineWithBrush(this.icontext,
                                                     startpt.x+size.x, startpt.y+size.y,
 			                            startpt.x, startpt.y+size.y, brush),
-            rect4 = OldPaint.Draw.drawLineWithBrush(this.icontext, startpt.x, startpt.y+size.y,
+            rect4 = OldPaint.Draw.drawLineWithBrush(this.icontext,
+                                                    startpt.x, startpt.y+size.y,
 			                            startpt.x, startpt.y, brush);
 
         var rect = OldPaint.Util.intersect(this.rect, OldPaint.Util.union(rect1, rect2));
@@ -189,17 +191,24 @@ OldPaint.IndexedImage = function (data) {
         var width = this.icanvas.width, height = this.icanvas.height;
         var pixbuf = this.icontext.getImageData(0, 0, width, height);
         var rect = OldPaint.Draw.bucketfill(pixbuf.data, width, height, pt, color);
-        this.update(pixbuf, rect.left, rect.top, rect.width, rect.height, true);
-        return rect;
+        if (rect.width > 0 && rect.height > 0) {
+            // only return a rect if there was something to fill
+            // (e.g. not already the correct color)
+            this.update(pixbuf, rect.left, rect.top, rect.width, rect.height,
+                        true);
+            return rect;
+        }
     };
 
+    // work in progress...
     this.gradientfill = function (pt, colors) {
         colors = _.map(colors, function (color) {
 	    return [color, 0, 0, this.palette.colors[color][3]];
         }, this);
-        var width = this.icanvas.width, height = this.icanvas.height;
-        var pixbuf = this.icontext.getImageData(0, 0, width, height);
-        var rect = OldPaint.Draw.gradientfill(pixbuf.data, width, height, pt, colors);
+        var width = this.icanvas.width, height = this.icanvas.height,
+            pixbuf = this.icontext.getImageData(0, 0, width, height),
+            rect = OldPaint.Draw.gradientfill(
+                pixbuf.data, width, height, pt, colors);
         this.update(pixbuf, 0, 0, width, height, true);
         this.updateCanvas();
         return rect;
