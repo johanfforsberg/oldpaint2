@@ -55,7 +55,7 @@ OldPaint.Tools = (function () {
         // take the correct version of the brush
         var _brush = stroke.erase? brush.erase : brush.draw;
 
-        var stream = tool(stroke.coords.throttle(100));
+        var stream = tool(stroke.coords.throttle(20));
         // throttling seems like a hack, but it makes things smoother in FF
         // because it prevents the stream from saturating if drawing is slow.
         // using "backpressure" would be better, but not doable in bacon..?
@@ -89,7 +89,7 @@ OldPaint.Tools = (function () {
         // take the correct version of the brush
         var _brush = stroke.erase? brush.erase : brush.draw;
 
-        var stream = tool(stroke.coords.throttle(100));
+        var stream = tool(stroke.coords.throttle(20));
         stream.take(1).onValue(function () {update(before());});  // remove the ephemeral
         stream.onValue(function(rect) {
             update(rect);
