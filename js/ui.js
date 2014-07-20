@@ -5,6 +5,11 @@ var _ = mori;
 
 OldPaint.UI = (function () {
 
+    var bus = {
+        draw: new Bacon.Bus(),
+        stroke: new Bacon.Bus()
+    };
+    
     var MAX_UNDOS = 10;
     var actionNumber = 0;
 
@@ -138,11 +143,18 @@ OldPaint.UI = (function () {
             actionNumber += 1;
             this.pushUndo(action);
             layer.backup();
+            //this.cleanup();
+            bus.stroke.push(stroke);
             // if (stroke.erase) {
             //     layer.updateAlpha(rect, this.state.palette);
             // }
         },
 
+        cleanup: function () {
+            this.clearEphemeral();
+            //this.refs.layers.updatePreview();            
+        },
+        
         // draw something temporary, such as the brush "preview"
         drawEphemeral: function (pt, update) {
             if (this.refs.tools.getCurrent().showEphemeral) {
@@ -242,8 +254,8 @@ OldPaint.UI = (function () {
                 image = layer.subImage(region),
                 brush = new OldPaint.ImageBrush(image);
             brush.update(this.state.palette);
-            this.setState({user_brushes: truncate(_.conj(
-                this.state.user_brushes, brush), 5)});
+            this.setState({user_brushes: truncate(
+                _.conj(this.state.user_brushes, brush), 5)});
             this.refs.tools.select(_.get(this.state.tools, 0));
             this.refs.brushes.select(brush);
         },
@@ -270,6 +282,7 @@ OldPaint.UI = (function () {
                 this.setState({undos: _.pop(this.state.undos),
                                redos: _.conj(this.state.redos, result)}, cb);
             }
+            this.cleanup();
         },
 
         // redo the latest undo
@@ -281,6 +294,7 @@ OldPaint.UI = (function () {
                 this.setState({redos: _.pop(this.state.redos),
                                undos: _.conj(this.state.undos, result)}, cb);
             }
+            this.cleanup();            
         },
 
         // An "action" represents a change. Performing it returns a
@@ -723,7 +737,7 @@ OldPaint.UI = (function () {
                          draggable="true"
                          onDragEnd={this.dragEnd}
                          onDragStart={this.dragStart}>
-                        <LayerPreview key={l.key}
+                        <LayerPreview key={l.key} ref={"layer-" + l.key}
                             data={l} selected={l === this.state.current}
                             select={this.select}
                             show={this.props.showLayer}
@@ -754,6 +768,12 @@ OldPaint.UI = (function () {
 
         getCurrent: function () {
             return this.state.current;
+        },
+
+        updatePreview: function () {
+            console.log("refs", this.refs, "layer-", this.state.current.key);
+            var preview = this.refs["layer-" + this.state.current.key];
+            preview.update();
         },
 
         // Drag'n drop
@@ -819,17 +839,24 @@ OldPaint.UI = (function () {
     var LayerPreview = React.createClass({
 
         componentDidMount: function () {
-            var container = this.refs.container.getDOMNode();
-            container.appendChild(this.props.data.image.image.get_repr());
+            var container = this.refs.container.getDOMNode(),
+                image = this.props.data.image.image.get_data_image();
+            container.appendChild(image);
+            bus.stroke.onValue(this.update);
         },
 
+        componendDidUpdate: function () {
+            this.update();
+        },
+        
         render: function () {
             var cx = React.addons.classSet,
                 classes = cx({"layer-preview": true,
                               selected: this.props.selected});
             return (<table draggable="false">
                         <tr className={classes} onClick={this.select}>
-                            <td ref="container"> </td>
+                            <td ref="container">
+                            </td>
                             <td>
                                 <input type="checkbox"
                                        checked={this.props.data.visible}
@@ -839,6 +866,11 @@ OldPaint.UI = (function () {
                     </table>);
         },
 
+        update: function () {
+            var image = this.refs.container.getDOMNode().firstChild;
+            image.src = this.props.data.image.image.get_repr().toDataURL();
+        },
+        
         select: function () {
             this.props.select(this.props.data);
         },
