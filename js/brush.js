@@ -37,6 +37,9 @@ OldPaint.Brush = (function () {
         // TODO: erase-brush should be drawn on the fly
 	this[shape](this.erase, 0, palette);
 
+        // create image versions; slightly faster than canvas for drawing
+        this.drawImage = this.draw.image.get_data_image();
+        this.eraseImage = this.erase.image.get_data_image();
         this.previewURL = this.preview.image.get_repr().toDataURL();
     };
 
@@ -45,6 +48,7 @@ OldPaint.Brush = (function () {
             console.log("setColor", color, palette);
             this.color = color;
             this[this.shape](this.draw, color, palette);
+            this.drawImage = this.draw.image.get_data_image();
         }
     };
 
@@ -54,14 +58,14 @@ OldPaint.Brush = (function () {
             width = Math.min(64, this.size.width);
         return {width: width, height: Math.round(ratio * width)};
     };
-    
+
     Brush.prototype.renderPreview = function (canvas) {
         var context = canvas.getContext("2d");
         context.drawImage(this.preview.image.get_repr(),
                           0, 0, this.size.width, this.size.height,
-                          0, 0, canvas.width, canvas.height);        
+                          0, 0, canvas.width, canvas.height);
     };
-    
+
     Brush.prototype.ellipse = function (image, color, palette) {
         console.log(palette);
 	image.image.draw_filled_ellipse(

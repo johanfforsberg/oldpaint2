@@ -97,8 +97,8 @@ OldPaint.IndexedImage = function (data) {
     // Returns a rect of the changed area.
 
     this.draw_brush = function (pt, brush, color) {
-        var width = brush.image.canvas.width, height = brush.image.canvas.height,
-	    rect = this.blit(brush.image.get_data_image(),
+        var width = brush.width, height = brush.height,
+	    rect = this.blit(brush,
 			     {left: 0, top: 0, width: width, height: height},
 			     {left: pt.x - Math.floor(width / 2),
 			      top: pt.y - Math.floor(height / 2),
@@ -109,25 +109,23 @@ OldPaint.IndexedImage = function (data) {
     this.draw_line = function (pt1, pt2, brush) {
 	pt2 = pt2 || pt1;
         var rect = OldPaint.Draw.drawLineWithBrush(
-            this.icontext, pt1.x, pt1.y, pt2.x, pt2.y,
-            brush.image.get_data_image());
+            this.icontext, pt1.x, pt1.y, pt2.x, pt2.y, brush);
         return rect;
     };
 
     this.draw_rectangle = function (startpt, size, brush) {
-        var brush_image = brush.image.get_data_image();
         var rect1 = OldPaint.Draw.drawLineWithBrush(this.icontext, startpt.x, startpt.y,
                                                     startpt.x+size.x, startpt.y,
-                                                    brush_image),
+                                                    brush),
             rect2 = OldPaint.Draw.drawLineWithBrush(this.icontext,
                                                     startpt.x+size.x, startpt.y,
                                                     startpt.x+size.x, startpt.y+size.y,
-                                                    brush_image),
+                                                    brush),
             rect3 = OldPaint.Draw.drawLineWithBrush(this.icontext,
                                                     startpt.x+size.x, startpt.y+size.y,
-			                            startpt.x, startpt.y+size.y, brush_image),
+			                            startpt.x, startpt.y+size.y, brush),
             rect4 = OldPaint.Draw.drawLineWithBrush(this.icontext, startpt.x, startpt.y+size.y,
-			                            startpt.x, startpt.y, brush_image);
+			                            startpt.x, startpt.y, brush);
 
         var rect = OldPaint.Util.intersect(this.rect, OldPaint.Util.union(rect1, rect2));
         return rect;
@@ -146,7 +144,7 @@ OldPaint.IndexedImage = function (data) {
 
     this.draw_ellipse = function (pt, size, brush) {
         var rect = OldPaint.Draw.drawEllipseWithBrush(this.icontext, pt.x, pt.y,
-					              size.x, size.y, brush.image.get_data_image());
+					              size.x, size.y, brush);
         return OldPaint.Util.intersect(this.rect, rect);
     };
 

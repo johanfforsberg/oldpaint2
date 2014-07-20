@@ -25,26 +25,31 @@ OldPaint.ImageBrush = (function () {
         this.erase = image.copy();
         // a temporary palette to draw the erase
         var palette = new OldPaint.Palette([[0, 0, 0, 0]]);
-        
+
+        // create image versions; slightly faster than canvas for drawing
+        this.drawImage = this.draw.image.get_data_image();
+        this.eraseImage = this.erase.image.get_data_image();
         this.previewURL = null;
     };
 
-    ImageBrush.prototype.update = function (palette) {        
+    ImageBrush.prototype.update = function (palette) {
         // Update the preview with the current palette
         this.preview.image.updateCanvas(this.preview.rect(), palette);
-        
+
         // update the alpha of the brush, so that transparent
         // parts are not drawn.
         this.draw.image.updateAlpha(this.erase.rect(), palette);
         this.erase.image.updateAlpha(this.erase.rect(), palette);
         this.erase.image.colorize(0);
+        this.drawImage = this.draw.image.get_data_image();
+        this.eraseImage = this.erase.image.get_data_image();
     };
-    
+
     ImageBrush.prototype.setColor = function (color, palette) {
         if (color != this.color) {
             console.log("setColor", color, palette);
             this.color = color;
-            
+            this.drawImage = this.draw.image.get_data_image();
             //this[this.shape](this.draw, color, palette);
         }
     };
@@ -64,12 +69,12 @@ OldPaint.ImageBrush = (function () {
         }
         return {width: width, height: height};
     };
-    
+
     ImageBrush.prototype.renderPreview = function (canvas) {
         var context = canvas.getContext("2d");
         context.drawImage(this.preview.image.get_repr(),
                           0, 0, this.size.width, this.size.height,
-                          0, 0, canvas.width, canvas.height);        
+                          0, 0, canvas.width, canvas.height);
     };
 
     return ImageBrush;

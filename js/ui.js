@@ -151,7 +151,7 @@ OldPaint.UI = (function () {
                 this.refs.brushes.getCurrent().setColor(
                     this.refs.palette.getCurrent(), this.state.palette);
                 this._ephemeralRect = this.refs.layers.getCurrent().draw_brush(
-                    this.refs.brushes.getCurrent().draw, pt);
+                    this.refs.brushes.getCurrent().drawImage, pt);
                 update(this.refs.layers.getCurrent(),
                        OldPaint.Util.union(oldRect, this._ephemeralRect));
             }
@@ -636,7 +636,7 @@ OldPaint.UI = (function () {
                 "mousemove", this.handleMoved);
             this._dragstart = this._corner = null;
         },
-        
+
         // return whichever corner the element represents
         _get_corner: function (el) {
             if (el.classList.contains("topleft")) return "topleft";
@@ -674,7 +674,7 @@ OldPaint.UI = (function () {
                 "mousemove", this.handleMoved);
             document.addEventListener("mouseup", this.release);
         },
-        
+
         // the user is dragging one of the corner handles
         handleMoved: function (event) {
             if (!this._dragstart) {
@@ -956,7 +956,7 @@ OldPaint.UI = (function () {
                                     width={size.width}
                                     height={size.height}/>
                         </td>
-                        
+
                         <td className="description">
                             {this.props.brush.shape + " [" +
                              this.props.brush.size.width + "·" +

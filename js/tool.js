@@ -24,7 +24,7 @@ OldPaint.Tools = (function () {
         }
 
         // take the correct version of the brush
-        var _brush = stroke.erase? brush.erase : brush.draw;
+        var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
         before();
 
@@ -53,7 +53,7 @@ OldPaint.Tools = (function () {
         }
 
         // take the correct version of the brush
-        var _brush = stroke.erase? brush.erase : brush.draw;
+        var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
         var stream = tool(stroke.coords.throttle(20));
         // throttling seems like a hack, but it makes things smoother in FF
@@ -87,7 +87,7 @@ OldPaint.Tools = (function () {
         }
 
         // take the correct version of the brush
-        var _brush = stroke.erase? brush.erase : brush.draw;
+        var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
         var stream = tool(stroke.coords.throttle(20));
         stream.take(1).onValue(function () {update(before());});  // remove the ephemeral
@@ -117,7 +117,7 @@ OldPaint.Tools = (function () {
         }
 
         // take the correct version of the brush
-        var _brush = stroke.erase? brush.erase : brush.draw;
+        var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
         var stream = tool(stroke.coords.throttle(100));
         stream.onValue(function(rect) {
