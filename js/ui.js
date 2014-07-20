@@ -6,7 +6,7 @@ var _ = mori;
 OldPaint.UI = (function () {
 
     var bus = {
-        draw: new Bacon.Bus(),
+        update: new Bacon.Bus(),
         stroke: new Bacon.Bus()
     };
     
@@ -120,12 +120,13 @@ OldPaint.UI = (function () {
         // with lines.
         drawStroke: function (stroke, update) {
             var tool = this.refs.tools.getCurrent();
-            tool.draw(this.refs.layers.getCurrent(),
-                      this.refs.brushes.getCurrent(),
-                      this.refs.palette.getCurrent(),
-                      update.bind(null, this.refs.layers.getCurrent()),
-                      this.prepareStroke, this.finishStroke,
-                      this.setRegion, this.setCoords, stroke);
+            bus.update.plug(
+                tool.draw(this.refs.layers.getCurrent(),
+                          this.refs.brushes.getCurrent(),
+                          this.refs.palette.getCurrent(),
+                          update.bind(null, this.refs.layers.getCurrent()),
+                          this.prepareStroke, this.finishStroke,
+                          this.setRegion, this.setCoords, stroke));
         },
 
         // after a stroke is done, we need to create an undo action and
@@ -134,7 +135,7 @@ OldPaint.UI = (function () {
             var layer = this.refs.layers.getCurrent(),
                 patch = layer.patchFromBackup(rect),
                 action = ["draw", {patch: patch, layer: layer,
-                                   type: "draw",
+                                   type: "tool",
                                    tool: this.refs.tools.getCurrent(),
                                    brush: this.refs.brushes.getCurrent().previewURL,
                                    color: this.state.palette.colors[
@@ -161,15 +162,18 @@ OldPaint.UI = (function () {
                 // make sure the brush has the current color (inefficient?)
                 brush.setColor(color, this.state.palette);
                 this._ephemeralRect = layer.draw_brush(brush.drawImage, pt);
-                update(layer, OldPaint.Util.union(oldRect, this._ephemeralRect));
+                bus.update.push({
+                    layer: layer,
+                    rect: OldPaint.Util.union(oldRect, this._ephemeralRect)
+                });
             }
         },
 
         clearEphemeral: function (update) {
             if (this._ephemeralRect) {
-                var rect = this.refs.layers.getCurrent().restore(this._ephemeralRect);
+                var rect = this.refs.layers.getCurrent().restore(
+                    this._ephemeralRect);
                 this._ephemeralRect = null;
-                //update(this.refs.layers.getCurrent(), rect);
                 return rect;
             }
         },
@@ -369,6 +373,7 @@ OldPaint.UI = (function () {
             var node = this.refs.frame.getDOMNode();
             console.log("node", node);
             OldPaint.setupInput(node, this, this.drawStroke, this.drawEphemeral);
+            bus.update.onValue(this.update);
         },
 
         componentDidUpdate: function () {
@@ -459,8 +464,8 @@ OldPaint.UI = (function () {
             this.props.drawEphemeral(pt, this.update);
         },
 
-        update: function (layer, rect) {
-            this.refs[layer.key].addUpdate(rect);
+        update: function (data) {
+            this.refs[data.layer.key].addUpdate(data.rect);
         },
 
         undo: function () {

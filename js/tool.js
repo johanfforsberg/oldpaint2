@@ -30,11 +30,12 @@ OldPaint.Tools = (function () {
 
         stroke.coords.throttle(200).onValue(setCoords);
         var stream = tool(stroke.coords);
-        stream.onValue(update);  // update the layer view while drawing
+        //stream.onValue(update);  // update the layer view while drawing
         stream
             .fold(null, OldPaint.Util.union)  // make a rect of the changed part
             .onValue(after, stroke);  // finally send the entire "dirty" rectangle
-
+        return stream
+            .map(function (r) {return {layer: layer, rect: r};});
     };
 
     var rectangle = function (layer, brush, color, update, before, after,
@@ -58,9 +59,9 @@ OldPaint.Tools = (function () {
         var stream = tool(stroke.coords.throttle(20));
         // throttling seems like a hack, but it makes things smoother in FF
         // because it prevents the stream from saturating if drawing is slow.
-        // using "backpressure" would be better, but not doable in bacon..?
+        // using "backpressure" might be better, but not doable in bacon..?
+
         stream.onValue(function(rect) {
-            update(rect);
             oldRect = rect;
         });
 
@@ -68,6 +69,7 @@ OldPaint.Tools = (function () {
             .fold(null, OldPaint.Util.union)  // make a rect of the changed part
             .onValue(after, stroke);  // finally send the entire "dirty" rectangle
 
+        return stream.map(function (r) {return {layer: layer, rect: r};});
     };
 
     var ellipse = function (layer, brush, color, update, before, after,
@@ -78,8 +80,7 @@ OldPaint.Tools = (function () {
         function tool(pts) {
             return pts.take(1)  // use the starting point as center
                 .combine(pts, function(p0, p1) {  // together with the latest
-
-                   layer.restore(oldRect);
+                    layer.restore(oldRect);
                     var rect = layer.draw_ellipse.bind(layer)(
                         _brush, p0, OldPaint.Util.diff(p0, p1));
                     return OldPaint.Util.union(rect, oldRect);
@@ -90,16 +91,14 @@ OldPaint.Tools = (function () {
         var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
         var stream = tool(stroke.coords.throttle(20));
-        stream.take(1).onValue(function () {update(before());});  // remove the ephemeral
-        stream.onValue(function(rect) {
-            update(rect);
-            oldRect = rect;
-        });
+        
+        stream.onValue(function(rect) {oldRect = rect;});  // hack
 
         stream
             .fold(null, OldPaint.Util.union)  // make a rect of the changed part
             .onValue(after, stroke);  // finally send the entire "dirty" rectangle
 
+        return stream.map(function (r) {return {layer: layer, rect: r};});        
     };
 
     var line = function (layer, brush, color, update, before, after,
@@ -119,16 +118,15 @@ OldPaint.Tools = (function () {
         // take the correct version of the brush
         var _brush = stroke.erase? brush.eraseImage : brush.drawImage;
 
-        var stream = tool(stroke.coords.throttle(100));
-        stream.onValue(function(rect) {
-            update(rect);
-            oldRect = rect;
-        });
+        var stream = tool(stroke.coords.throttle(20));
+        
+        stream.onValue(function(rect) {oldRect = rect;});
 
         stream
             .fold(null, OldPaint.Util.union)  // make a rect of the changed part
             .onValue(after, stroke);  // finally send the entire "dirty" rectangle
 
+        return stream.map(function (r) {return {layer: layer, rect: r};});
     };
 
     var fill = function (layer, brush, color, update, before, after,
@@ -148,10 +146,11 @@ OldPaint.Tools = (function () {
 
         stream
             .onValue(function (r) {
-                update(r);
                 after(stroke, r);
             });  // finally send the entire "dirty" rectangle
-
+        
+        return Bacon.never();  // need to return a stream but no updates
+                               // will be needed so we take an empty one.
     };
 
     var region = function (layer, brush, color, update, before, after,
