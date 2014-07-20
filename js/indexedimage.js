@@ -74,6 +74,12 @@ OldPaint.IndexedImage = function (data) {
 	return this.indexed? this.canvas : this.icanvas;
     };
 
+    this.get_data_image = function () {
+        var image = new Image();
+        image.src = this.get_data().toDataURL();
+        return image;
+    };
+    
     this.get_size = function () {
 	return {width: this.icanvas.width, height: this.icanvas.height};
     };
@@ -103,7 +109,8 @@ OldPaint.IndexedImage = function (data) {
     this.draw_line = function (pt1, pt2, brush) {
 	pt2 = pt2 || pt1;
         var rect = OldPaint.Draw.drawLineWithBrush(
-            this.icontext, pt1.x, pt1.y, pt2.x, pt2.y, brush.image.icanvas);
+            this.icontext, pt1.x, pt1.y, pt2.x, pt2.y,
+            brush.image.get_data_image());
         return rect;
     };
 

@@ -65,7 +65,7 @@ OldPaint.setupInput = function (element, view, drawStroke, drawEphemeral) {
     // handle panning by moving the view with the difference
     // between successive mouse positions
     function pan(coords) {
-        coords.throttle(100).slidingWindow(2, 2)
+        coords.throttle(50).slidingWindow(2, 2)
             .onValues(function (p1, p2) {view.pan(OldPaint.Util.diff(p1, p2));});
     }
 
