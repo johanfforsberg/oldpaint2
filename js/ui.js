@@ -92,11 +92,12 @@ OldPaint.UI = (function () {
                                 {/* The list of "mini" layers on the side */}
                                 <LayersList ref="layers"
                                             layers={this.state.layers}
-                                            addLayer={this.addLayer}
-                                            removeLayer={this.removeLayer}
-                                            moveLayer={this.moveLayer}
-                                            hideLayer={this.hideLayer}
-                                            showLayer={this.showLayer}/>
+                                            add={this.addLayer}
+                                            remove={this.removeLayer}
+                                            clear={this.clearLayer}
+                                            move={this.moveLayer}
+                                            hide={this.hideLayer}
+                                            show={this.showLayer}/>
                             </aside>
 
                         </section>
@@ -139,15 +140,10 @@ OldPaint.UI = (function () {
                                    color: this.state.palette.colors[
                                        stroke.erase? 0 :
                                            this.refs.palette.getCurrent()],
-                                   n: actionNumber}];
-            actionNumber += 1;
+                                   n: actionNumber++}];
             this.pushUndo(action);
             layer.backup();
-            //this.cleanup();
             bus.stroke.push(stroke);
-            // if (stroke.erase) {
-            //     layer.updateAlpha(rect, this.state.palette);
-            // }
         },
 
         cleanup: function () {
@@ -158,14 +154,14 @@ OldPaint.UI = (function () {
         // draw something temporary, such as the brush "preview"
         drawEphemeral: function (pt, update) {
             if (this.refs.tools.getCurrent().showEphemeral) {
-                var oldRect = this.clearEphemeral();
+                var oldRect = this.clearEphemeral(),
+                    brush = this.refs.brushes.getCurrent(),
+                    color =  this.refs.palette.getCurrent(),
+                    layer =  this.refs.layers.getCurrent();
                 // make sure the brush has the current color (inefficient?)
-                this.refs.brushes.getCurrent().setColor(
-                    this.refs.palette.getCurrent(), this.state.palette);
-                this._ephemeralRect = this.refs.layers.getCurrent().draw_brush(
-                    this.refs.brushes.getCurrent().drawImage, pt);
-                update(this.refs.layers.getCurrent(),
-                       OldPaint.Util.union(oldRect, this._ephemeralRect));
+                brush.setColor(color, this.state.palette);
+                this._ephemeralRect = layer.draw_brush(brush.drawImage, pt);
+                update(layer, OldPaint.Util.union(oldRect, this._ephemeralRect));
             }
         },
 
@@ -222,6 +218,20 @@ OldPaint.UI = (function () {
         showLayer: function (layer) {
             layer.visible = true;
             this.setState({layers: this.state.layers});
+        },
+
+        clearLayer: function () {
+            var layer = this.refs.layers.getCurrent(),
+                patch = layer.patchFromBackup(),
+                action = ["draw", {patch: patch, layer: layer,
+                                   type: "clear",
+                                   tool: this.refs.tools.getCurrent(),
+                                   brush: this.refs.brushes.getCurrent().previewURL,
+                                   color: this.state.palette.colors[0],
+                                   n: actionNumber++}];
+            this.refs.drawing.getLayerView(layer).addUpdate(layer.clear());
+            this.pushUndo(action);
+            layer.backup();
         },
 
         setRegion: function (rect, release) {
@@ -388,6 +398,10 @@ OldPaint.UI = (function () {
         },
 
         // === OldPaint methods ===
+
+        getLayerView: function (layer) {
+            return this.refs[layer.key];
+        },
 
         updateViewPort: function (size) {
             var node = this.getDOMNode().parentNode,
@@ -740,8 +754,8 @@ OldPaint.UI = (function () {
                         <LayerPreview key={l.key} ref={"layer-" + l.key}
                             data={l} selected={l === this.state.current}
                             select={this.select}
-                            show={this.props.showLayer}
-                            hide={this.props.hideLayer}/>
+                            show={this.props.show}
+                            hide={this.props.hide}/>
                     </div>
                 );
             }.bind(this), this.props.layers, _.range());
@@ -754,8 +768,9 @@ OldPaint.UI = (function () {
                             {_.into_array(_.reverse(layers))}
                         </div>
                         <div className="subcontainer">
-                            <button onClick={this.props.addLayer}> Add </button>
-                            <button onClick={this.props.removeLayer}> Remove </button>
+                            <button onClick={this.props.add}> Add </button>
+                            <button onClick={this.props.remove}> Remove </button>
+                            <button onClick={this.props.clear}> Clear </button>
                         </div>
                     </div>
                 </div>
@@ -830,7 +845,7 @@ OldPaint.UI = (function () {
             if (from > to) {to++;}
             if (this.nodePlacement == "after") {to--;}
 
-            this.props.moveLayer(from, to);
+            this.props.move(from, to);
         }
 
     });
