@@ -146,14 +146,14 @@ OldPaint.UI = (function () {
         // draw something temporary, such as the brush "preview"
         drawEphemeral: function (pt, update) {
             if (this.refs.tools.getCurrent().showEphemeral) {
-                var oldRect = this.clearEphemeral();
+                var oldRect = this.clearEphemeral(),
+                    brush = this.refs.brushes.getCurrent(),
+                    color =  this.refs.palette.getCurrent(),
+                    layer =  this.refs.layers.getCurrent();
                 // make sure the brush has the current color (inefficient?)
-                this.refs.brushes.getCurrent().setColor(
-                    this.refs.palette.getCurrent(), this.state.palette);
-                this._ephemeralRect = this.refs.layers.getCurrent().draw_brush(
-                    this.refs.brushes.getCurrent().drawImage, pt);
-                update(this.refs.layers.getCurrent(),
-                       OldPaint.Util.union(oldRect, this._ephemeralRect));
+                brush.setColor(color, this.state.palette);
+                this._ephemeralRect = layer.draw_brush(brush.drawImage, pt);
+                update(layer, OldPaint.Util.union(oldRect, this._ephemeralRect));
             }
         },
 
