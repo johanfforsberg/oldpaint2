@@ -168,33 +168,7 @@ OldPaint.Tools = (function () {
                 });
         }
 
-        function get_opposite_point(rect, corner) {
-            switch (corner) {
-            case "topleft":
-                return {x: rect.left + rect.width, y: rect.top + rect.height};
-            case "topright":
-                return {x: rect.left, y: rect.top + rect.height};
-            case "bottomright":
-                return {x: rect.left, y: rect.top};
-            case "bottomleft":
-                return {x: rect.left + rect.width, y: rect.top};
-            }
-            return null;
-        }
-        
-        function corner_tool(pts) {
-            var opposite = get_opposite_point(rect, corner);
-            return Bacon.once(opposite).combine(pts, function (p0, p1) {
-                var r = OldPaint.Util.rectify(p0, p1);
-                setRegion(r, false);
-                return r;
-            });
-        }
-
-        if (corner) 
-            var stream = corner_tool(stroke.coords.throttle(50));
-        else
-            var stream = tool(stroke.coords);
+        var stream = tool(stroke.coords);
         stream
             .fold(null, function (v, w) {return w;})
             .onValue(function (r) {
