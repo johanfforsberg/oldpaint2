@@ -40,6 +40,10 @@ OldPaint.Layer = (function () {
         return this.image.image.draw_fill(p, color, erase);
     };
 
+    Layer.prototype.clear = function () {
+        return this.image.image.clear();
+    };
+
     Layer.prototype.backup = function (rect) {
         if (rect) {
             this._backup_context.clearRect(rect.left, rect.top,
@@ -77,6 +81,7 @@ OldPaint.Layer = (function () {
         return null;
     };
 
+
     Layer.prototype.subImage = function (rect) {
         var truncrect = OldPaint.Util.intersect(rect, this.image.rect());
         var sub = OldPaint.Util.copy_canvas(this.image.image.get_data(), rect);
@@ -85,8 +90,11 @@ OldPaint.Layer = (function () {
     };
 
     Layer.prototype.patchFromBackup = function (rect) {
-        var truncrect = OldPaint.Util.intersect(rect, this.image.rect());
-        return new OldPaint.Patch(truncrect, this._backup);
+        if (rect)
+            rect = OldPaint.Util.intersect(rect, this.image.rect());
+        else
+            rect = this.image.rect();
+        return new OldPaint.Patch(rect, this._backup);
     };
 
     Layer.prototype.swapPatch = function (patch) {
